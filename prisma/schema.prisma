@@ -1,0 +1,22 @@
+// Describes your database tables as models. `prisma migrate dev` turns
+// changes here into SQL migrations and regenerates the typed client.
+
+generator client {
+  provider = "prisma-client"
+  // Inside src/ because tsconfig.build.json sets rootDir to ./src.
+  output   = "../src/generated/prisma"
+  // Match the project's ESM + nodenext setup so generated imports resolve.
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+}
