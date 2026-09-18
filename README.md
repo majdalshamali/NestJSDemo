@@ -1,124 +1,197 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# NestJS Demo
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A learning project: a [NestJS](https://nestjs.com) 12 REST API with
+[Arcjet](https://arcjet.com) request protection and a
+[Prisma](https://www.prisma.io) 7 data layer backed by Prisma Postgres.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Built step by step as a first NestJS project. Each commit is a working,
+tested increment.
 
-## Description
+## Stack
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+| Layer | Choice | Notes |
+|---|---|---|
+| Runtime | Node.js 24 (LTS) | managed with nvm-windows |
+| Framework | NestJS 12 | ESM (`"type": "module"`), TypeScript strict |
+| Security | `@arcjet/node` | Shield (WAF), rate limiting, bot detection, email validation |
+| ORM | Prisma 7.10 | `@prisma/adapter-pg` driver adapter (required in Prisma 7) |
+| Database | Prisma Postgres | hosted; local Postgres works too, only `DATABASE_URL` changes |
+| Lint / format | oxlint, Prettier | |
+| Tests | vitest | |
 
-## Project setup
+## Project layout
 
-```bash
-$ npm install
+```
+prisma/
+  schema.prisma              data model (User); source of truth for the DB
+  migrations/                generated SQL, one folder per migration
+prisma.config.ts             Prisma 7 config (schema path, migrations dir, DATABASE_URL)
+src/
+  main.ts                    bootstrap; loads .env first
+  app.module.ts              root module
+  arcjet/
+    arcjet.client.ts         Arcjet client + the rules used by the demo routes
+    arcjet.guard.ts          Nest guard applying Shield to a route/controller
+  prisma/
+    prisma.service.ts        PrismaClient wrapped as an injectable, connects on startup
+    prisma.module.ts         @Global so any module can inject PrismaService
+  protected/
+    protected.controller.ts  /api/* routes, one per Arcjet rule
+  users/
+    users.controller.ts      /users REST endpoints
+    users.service.ts         business logic against Prisma
+  generated/prisma/          typed Prisma client (gitignored, regenerated)
 ```
 
-## Compile and run the project
+## Prerequisites
 
-```bash
-# development
-$ npm run start
+- Node.js >= 22.18 (24 LTS recommended)
+- npm
+- An [Arcjet](https://app.arcjet.com) account (free) for `ARCJET_KEY`
+- A [Prisma Postgres](https://console.prisma.io) database (free tier) for
+  `DATABASE_URL`, or any PostgreSQL you can reach
 
-# watch mode
-$ npm run start:dev
+On Windows, if `npm`/`nest` refuse to run with "running scripts is disabled",
+allow local scripts once:
 
-# production mode
-$ npm run start:prod
+```powershell
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-## Run tests
+## Install
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+git clone https://github.com/majdalshamali/NestJSDemo.git
+cd NestJSDemo
+npm install
 ```
 
-## Deployment
+`npm install` also runs Prisma's install scripts; they are pre-approved in
+`package.json` under `allowScripts`.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Configure
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Copy the example env file and fill in the two secrets:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+cp .env.example .env
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+| Variable | Purpose |
+|---|---|
+| `ARCJET_KEY` | site key from app.arcjet.com |
+| `ARCJET_MODE` | `LIVE` blocks requests; `DRY_RUN` only logs what *would* be blocked |
+| `ARCJET_ENV` | `development` lets Arcjet accept localhost / private IPs |
+| `DATABASE_URL` | PostgreSQL connection string (Prisma Postgres gives you one) |
 
-## Observability
+`.env` is gitignored. Never commit it.
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+## Database
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-To add it to this project:
+For local development, apply migrations and generate the typed client:
 
 ```bash
-$ npm install @nestjs/observe
+npx prisma migrate dev
 ```
 
-Then follow the [setup guide](https://docs.nestjs.com/observability/overview) - it takes a single import and an app key.
+`npm install` also regenerates the client automatically (`postinstall` runs
+`prisma generate`), so a fresh clone only needs the command above to create
+the database tables.
 
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
+Other useful commands:
 
-## Resources
+```bash
+npx prisma migrate dev --name <change>   # after editing schema.prisma
+npx prisma generate                      # regenerate the client only
+npx prisma migrate deploy                # apply pending migrations, no prompts (prod)
+npx prisma studio                        # browse data in a web UI
+npx prisma validate                      # check schema + config
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+## Run
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+npm run start:dev      # watch mode, recompiles on save
+npm run start          # single run
+npm run build && npm run start:prod   # compiled output from dist/
+```
 
-## Support
+`npm run start:prod` runs `prisma migrate deploy` first (via the
+`prestart:prod` script), so pending migrations are applied automatically
+before the server starts. It never prompts and never creates new migrations —
+those still come from `prisma migrate dev` during development.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+The server listens on http://localhost:3000 (override with `PORT`).
 
-## Stay in touch
+## API
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Users (`/users`) — Prisma
+
+| Method | Path | Body | Responses |
+|---|---|---|---|
+| `POST` | `/users` | `{ "email": string, "name"?: string }` | `201` created · `400` missing email · `409` email already exists |
+| `GET` | `/users` | | `200` list, newest first |
+| `GET` | `/users/:id` | | `200` · `400` non-numeric id · `404` not found |
+
+```bash
+curl.exe -s -X POST http://localhost:3000/users -H "Content-Type: application/json" -d "{\"email\":\"a@b.com\",\"name\":\"Majd\"}"
+curl.exe -s http://localhost:3000/users
+curl.exe -s http://localhost:3000/users/1
+```
+
+### Arcjet demos (`/api`) — one route per rule
+
+Shield (the WAF) runs on every request through the Arcjet client. The other
+rules are attached per route with `withRule()` so the scenarios don't interfere
+with each other.
+
+| Route | Rule | Try | Expect |
+|---|---|---|---|
+| `GET /api/limited` | fixed window, 5 req / 10 s per IP | 8 quick requests | 5 × `200`, then `429` |
+| `GET /api/bots` | `detectBot({ allow: [] })` | `curl` user agent | `403`; a browser UA gets `200` |
+| `GET /api/shielded?q=` | Shield via `ArcjetGuard` | `?q=' OR 1=1--` | `403` (Shield weighs patterns; a single request may pass) |
+| `POST /api/signup` | `validateEmail` denying disposable / invalid / no-MX | `{"email":"x@mailinator.com"}` | `400`; a real address gets `200` |
+
+Denied responses name the rule that fired, e.g. `{"error":"Rate limit exceeded","rule":"fixedWindow"}`.
+
+```powershell
+# rate limit
+1..8 | % { $r = try { iwr http://localhost:3000/api/limited -UseBasicParsing } catch { $_.Exception.Response }; "$_`: $($r.StatusCode)" }
+```
+```bash
+# bot detection
+curl.exe -s -o NUL -w "%{http_code}\n" -A "curl/8.0" http://localhost:3000/api/bots
+# email validation
+curl.exe -s -X POST http://localhost:3000/api/signup -H "Content-Type: application/json" -d "{\"email\":\"test@mailinator.com\"}"
+```
+
+Set `ARCJET_MODE=DRY_RUN` to observe decisions in the server log without
+blocking anything — useful before enabling rules in production.
+
+## Quality
+
+```bash
+npm run lint           # oxlint
+npm run format         # prettier
+npm test               # unit tests (vitest)
+npm run test:e2e       # end-to-end tests
+```
+
+## Design notes
+
+- **`@arcjet/node` rather than `@arcjet/nest`** — the Nest package's peer range
+  stops at NestJS 11; this project is on 12. The plain Node SDK has no Nest peer
+  dependency, and the guard is a few lines of our own code.
+- **Generated Prisma client lives in `src/generated/`** — `tsconfig.build.json`
+  sets `rootDir` to `src`, so the client must be under it for `nest build`.
+  The generator is configured for ESM (`moduleFormat = "esm"`,
+  `importFileExtension = "js"`) to match `module: "nodenext"`.
+- **`dotenv/config` is the first import in `main.ts`** — module decorators read
+  `process.env` while modules are being *defined*, before any Nest lifecycle
+  hook runs, so the env file has to be loaded before `AppModule` is imported.
+- **Unique-constraint errors map to `409`** — Prisma error `P2002` is caught in
+  `UsersService.create`; without that it surfaces as a misleading `500`.
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+UNLICENSED — personal learning project.
