@@ -1,39 +1,37 @@
 import {
-  Body,
   Controller,
   Get,
   HttpException,
   HttpStatus,
   Param,
-  ParseIntPipe,
-  Post,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '../auth/auth.guard.js';
+import { AdminGuard } from '../auth/admin.guard.js';
+import { Session } from '../auth/session.decorator.js';
+import type { AuthSession } from '../auth/session.types.js';
 import { UsersService } from './users.service.js';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  create(@Body() body: { email?: string; name?: string }) {
-    if (!body?.email) {
-      throw new HttpException(
-        'Body must include an "email" field',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    return this.usersService.create({ email: body.email, name: body.name });
-  }
-
+  // Admin only: listing every user is an admin capability.
   @Get()
+  @UseGuards(AuthGuard, AdminGuard)
   findAll() {
     return this.usersService.findAll();
   }
 
-  // ParseIntPipe converts the ":id" path segment to a number and returns
-  // 400 automatically if it is not numeric.
+  // Self or admin only: a user can read their own record; anyone else's
+  // requires the admin role.
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  @UseGuards(AuthGuard)
+  async findOne(@Param('id') id: string, @Session() session: AuthSession) {
+    if (session.user.id !== id && session.user.role !== 'admin') {
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    }
+
     const user = await this.usersService.findOne(id);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
