@@ -26,3 +26,9 @@ npm-debug.log*
 
 # Prisma generated client (rebuilt by `prisma generate` / `prisma migrate dev`)
 src/generated/
+
+# Local AI tool configs
+.agents/
+.aider-desk/
+.claude/
+skills-lock.json
