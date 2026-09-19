@@ -9,7 +9,10 @@ export class AppController {
 
   @Get()
   @ApiOperation({ summary: 'Health check / greeting' })
-  @ApiOkResponse({ description: 'Plain text greeting.', type: String })
+  @ApiOkResponse({
+    description: 'Wrapped in the standard { statusCode, message, data } envelope.',
+    schema: { example: { statusCode: 200, message: 'success', data: 'Hello World!' } },
+  })
   getHello(): string {
     return this.appService.getHello();
   }

@@ -20,19 +20,21 @@ datasource db {
 // hand editing these models.
 
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  role          String?
-  banned        Boolean?  @default(false)
-  banReason     String?
-  banExpires    DateTime?
-  sessions      Session[]
-  accounts      Account[]
+  id             String               @id
+  name           String
+  email          String
+  emailVerified  Boolean              @default(false)
+  image          String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  role           String?
+  banned         Boolean?             @default(false)
+  banReason      String?
+  banExpires     DateTime?
+  sessions       Session[]
+  accounts       Account[]
+  maratons       Maraton[]
+  participations MaratonParticipate[]
 
   @@unique([email])
   @@map("user")
@@ -95,4 +97,34 @@ model RateLimit {
 
   @@unique([key])
   @@map("rateLimit")
+}
+
+model Maraton {
+  id           String               @id @default(cuid())
+  name         String
+  description  String?
+  startDate    DateTime
+  endDate      DateTime
+  isActive     Boolean              @default(true)
+  authorId     String
+  author       User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  participants MaratonParticipate[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@index([authorId])
+  @@map("maraton")
+}
+
+model MaratonParticipate {
+  id        String   @id @default(cuid())
+  maratonId String
+  maraton   Maraton  @relation(fields: [maratonId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([maratonId, userId])
+  @@index([userId])
+  @@map("maraton_participate")
 }

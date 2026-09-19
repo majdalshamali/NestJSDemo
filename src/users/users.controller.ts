@@ -18,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/auth.guard.js';
 import { AdminGuard } from '../auth/admin.guard.js';
+import { ResponseMessage } from '../common/response-message.decorator.js';
 import { Session } from '../auth/session.decorator.js';
 import type { AuthSession } from '../auth/session.types.js';
 import { UsersService } from './users.service.js';
@@ -50,11 +51,12 @@ export class UsersController {
     description: 'Admin only. Creating a user is sign up, not this API; see /api/auth/reference.',
   })
   @ApiOkResponse({
-    description: 'Every user, newest first.',
-    schema: { type: 'array', items: { example: userExample } },
+    description: 'Every user, newest first, wrapped in the standard { statusCode, message, data } envelope.',
+    schema: { example: { statusCode: 200, message: 'Users listed', data: [userExample] } },
   })
   @ApiUnauthorizedResponse({ description: 'No, missing, or invalid bearer token.' })
   @ApiForbiddenResponse({ description: 'Caller is authenticated but not an admin.' })
+  @ResponseMessage('Users listed')
   findAll() {
     return this.usersService.findAll();
   }
@@ -68,10 +70,14 @@ export class UsersController {
     description: 'The caller\'s own record, or any record if the caller is an admin.',
   })
   @ApiParam({ name: 'id', description: 'The Better Auth user id.', example: userExample.id })
-  @ApiOkResponse({ description: 'The user.', schema: { example: userExample } })
+  @ApiOkResponse({
+    description: 'The user, wrapped in the standard { statusCode, message, data } envelope.',
+    schema: { example: { statusCode: 200, message: 'User found', data: userExample } },
+  })
   @ApiUnauthorizedResponse({ description: 'No, missing, or invalid bearer token.' })
   @ApiForbiddenResponse({ description: 'Caller is neither the owner nor an admin.' })
   @ApiNotFoundResponse({ description: 'No user with that id.' })
+  @ResponseMessage('User found')
   async findOne(@Param('id') id: string, @Session() session: AuthSession) {
     if (session.user.id !== id && session.user.role !== 'admin') {
       throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
