@@ -1,0 +1,21 @@
+# One-command local run:  docker compose up -d --build
+# Stop and remove:        docker compose down
+#
+# Put a real .env next to this file (use .env.example as the template).
+# It is read at run time only and is never copied into the image.
+services:
+  api:
+    # Build straight from GitHub; nothing on the local disk is used.
+    # Change "#main" to another branch or a commit SHA to build that instead.
+    build:
+      context: https://github.com/majdalshamali/NestJSDemo.git#main
+    image: demo-api
+    container_name: demo-api
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    # Relaunch on crash or after a reboot, unless explicitly stopped.
+    # Also covers the cloud DB's cold start: the first attempt wakes it,
+    # the automatic retry connects.
+    restart: unless-stopped
