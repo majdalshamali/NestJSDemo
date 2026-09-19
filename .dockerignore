@@ -1,0 +1,30 @@
+# Dependencies and build output — the image installs/builds its own
+node_modules
+dist
+*.tsbuildinfo
+
+# Secrets — never inside an image
+.env
+.env.*
+!.env.example
+
+# Git and editor/AI tool metadata
+.git
+.gitignore
+.agents
+.aider-desk
+.claude
+skills-lock.json
+
+# Tests, docs, lint config — not needed at runtime
+test
+docs
+README.md
+.oxlintrc.json
+.prettierrc
+vitest.config*.ts
+
+# Docker files themselves
+Dockerfile
+docker-compose*.yml
+.dockerignore
