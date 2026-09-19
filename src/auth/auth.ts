@@ -7,6 +7,7 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { admin } from 'better-auth/plugins/admin';
 import { bearer } from 'better-auth/plugins/bearer';
+import { openAPI } from 'better-auth/plugins';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client.js';
 
@@ -28,8 +29,11 @@ export const auth = betterAuth({
   // admin() adds the "user" | "admin" role (new users always start at
   // "user", its default) plus ban fields. bearer() lets a client send
   // `Authorization: Bearer <token>` instead of a cookie; sign in/up return
-  // the token in the `set-auth-token` response header.
-  plugins: [admin(), bearer()],
+  // the token in the `set-auth-token` response header. openAPI() serves a
+  // reference page for these generated routes at /api/auth/reference,
+  // since they never go through Nest's router and so are invisible to
+  // @nestjs/swagger.
+  plugins: [admin(), bearer(), openAPI()],
   rateLimit: {
     // Persists counters in Postgres so limits survive a restart, instead of
     // resetting every `nest start --watch` reload.

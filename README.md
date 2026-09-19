@@ -18,6 +18,7 @@ tested increment.
 | Security | `@arcjet/node` | Shield (WAF), rate limiting, bot detection, email validation |
 | ORM | Prisma 7.10 | `@prisma/adapter-pg` driver adapter (required in Prisma 7) |
 | Database | Prisma Postgres | hosted; local Postgres works too, only `DATABASE_URL` changes |
+| API docs | `@nestjs/swagger` + Better Auth's `openAPI()` plugin | two pages, see API below; Swagger can't see Better Auth's routes, so they get their own page |
 | Lint / format | oxlint, Prettier | |
 | Tests | vitest | |
 
@@ -137,6 +138,20 @@ those still come from `prisma migrate dev` during development.
 
 The server listens on http://localhost:3000 (override with `PORT`).
 
+## API docs
+
+Two interactive pages, once the server is running:
+
+| Page | Covers |
+|---|---|
+| http://localhost:3000/api/docs | Everything Nest itself serves: `/users`, the Arcjet demos, the root route. Raw JSON at `/api/docs-json`. |
+| http://localhost:3000/api/auth/reference | Every Better Auth route (sign up, sign in, session, admin, and so on). Raw JSON at `/api/auth/open-api/generate-schema`. |
+
+They're separate because Better Auth's routes are generated at runtime and never
+go through Nest's router, so `@nestjs/swagger` has no way to see them; each page
+covers the half of the API it can actually introspect. The tables below are the
+same information, for a quick read without starting the server.
+
 ## API
 
 ### Auth (`/api/auth`) — Better Auth
@@ -246,6 +261,11 @@ npm run test:e2e       # end-to-end tests
   manages its own singleton.
 - **No self service path to the admin role** — `npm run seed:admin` is the only
   way to create one; every other route that touches `role` requires an existing admin.
+- **Two separate API doc pages, not one** — `@nestjs/swagger` builds its page by
+  reading decorators off Nest controllers; Better Auth's routes are generated at
+  runtime from its own config and never register as Nest controllers, so Swagger
+  has nothing to read for them. Its own `openAPI()` plugin fills that gap with a
+  second page instead of trying to fake Nest metadata for routes Nest never sees.
 
 ## License
 
